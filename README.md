@@ -26,17 +26,25 @@ docker build -t nsysu_drone_vnc:iron .
 
 ### Step 2 — Launch container
 
-**Windows (PowerShell) with NVIDIA GPU:**
+> **Note:** Do NOT use `--rm`. Without it, the container preserves installed packages
+> and copied files across restarts — you only need to install dependencies once.
+
+**First launch — Windows (PowerShell) with NVIDIA GPU:**
 ```powershell
-docker run -it --rm --gpus all -p 5901:5901 --privileged --name nsysu_drone_vnc nsysu_drone_vnc:iron
+docker run -it --gpus all -p 5901:5901 --privileged --name nsysu_drone_vnc nsysu_drone_vnc:iron
 ```
 
-**Windows (PowerShell) without GPU:**
+**First launch — Windows (PowerShell) without GPU:**
 ```powershell
-docker run -it --rm -p 5901:5901 --privileged --name nsysu_drone_vnc nsysu_drone_vnc:iron
+docker run -it -p 5901:5901 --privileged --name nsysu_drone_vnc nsysu_drone_vnc:iron
 ```
 
-**Linux/macOS:**
+**Subsequent launches (state preserved):**
+```powershell
+docker start -i nsysu_drone_vnc
+```
+
+**Linux/macOS (first launch):**
 ```bash
 ./run_docker.sh
 ```
