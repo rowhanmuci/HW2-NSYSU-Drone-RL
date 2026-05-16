@@ -1,0 +1,8 @@
+Assignment2/
+*.pdf
+part2/models/*.zip
+part2/logs/events.*
+__pycache__/
+*.pyc
+*.md~
+python-c-users-user-miniconda3-envs-ml-crystalline-phoenix.md

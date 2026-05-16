@@ -1,0 +1,58 @@
+# Part 1 Terminal Log — fly_straight_part1.py
+# Kp=0.5, max_speed=1.0 (defaults)
+
+# ── Target 1: (-2.0, 4.0, 1.5) ─────────────────────────────────────────────
+root@02d45840483d:~/part1# python3 fly_straight_part1.py --target -2 4 1.5
+[INFO] [1778851963.117102266] [fly_straight_part1]: Target: (-2.0, 4.0, 1.5)  Kp=0.5  max_speed=1.0
+[INFO] [1778851963.198208892] [fly_straight_part1]: dist=4.72  pos=(0.00,0.00,0.00)  vel=(-0.42,0.85,0.32)
+[INFO] [1778851964.299164903] [fly_straight_part1]: dist=4.72  pos=(0.00,0.00,0.00)  vel=(-0.42,0.85,0.32)
+[INFO] [1778851965.398604528] [fly_straight_part1]: dist=4.72  pos=(0.00,0.00,0.00)  vel=(-0.42,0.85,0.32)
+[INFO] [1778851966.498098356] [fly_straight_part1]: dist=7.85  pos=(5.03,3.03,4.86)  vel=(-0.90,0.12,-0.43)
+[INFO] [1778851967.498121028] [fly_straight_part1]: dist=7.12  pos=(4.39,3.16,4.52)  vel=(-0.90,0.12,-0.42)
+[INFO] [1778851968.498120120] [fly_straight_part1]: dist=6.18  pos=(3.55,3.27,4.11)  vel=(-0.90,0.12,-0.42)
+[INFO] [1778851969.498381521] [fly_straight_part1]: dist=5.20  pos=(2.67,3.38,3.69)  vel=(-0.90,0.12,-0.42)
+[INFO] [1778851970.498913955] [fly_straight_part1]: dist=4.21  pos=(1.78,3.49,3.28)  vel=(-0.90,0.12,-0.42)
+[INFO] [1778851971.598211905] [fly_straight_part1]: dist=3.13  pos=(0.81,3.62,2.83)  vel=(-0.90,0.12,-0.42)
+[INFO] [1778851972.598273682] [fly_straight_part1]: dist=2.15  pos=(-0.07,3.73,2.42)  vel=(-0.90,0.12,-0.43)
+[INFO] [1778851973.698130886] [fly_straight_part1]: dist=1.12  pos=(-1.01,3.86,2.00)  vel=(-0.49,0.07,-0.25)
+[INFO] [1778851974.698879463] [fly_straight_part1]: dist=0.50  pos=(-1.58,3.94,1.76)  vel=(-0.21,0.03,-0.13)
+[INFO] [1778851975.698122888] [fly_straight_part1]: Reached target (-2.0, 4.0, 1.5)! pos=(-1.85, 3.98, 1.63)
+
+# ── Target 2: (0.0, 0.0, 3.0) ──────────────────────────────────────────────
+root@02d45840483d:~/part1# python3 fly_straight_part1.py --target 0 0 3
+[INFO] [1778852120.798907045] [fly_straight_part1]: Target: (0.0, 0.0, 3.0)  Kp=0.5  max_speed=1.0
+[INFO] [1778852120.879886750] [fly_straight_part1]: dist=3.00  pos=(0.00,0.00,0.00)  vel=(0.00,0.00,1.00)
+[INFO] [1778852121.979267231] [fly_straight_part1]: dist=4.50  pos=(-1.95,3.99,2.31)  vel=(0.43,-0.89,0.15)
+[INFO] [1778852123.079168893] [fly_straight_part1]: dist=3.80  pos=(-1.65,3.38,2.44)  vel=(0.43,-0.89,0.15)
+[INFO] [1778852124.079222443] [fly_straight_part1]: dist=2.87  pos=(-1.24,2.55,2.58)  vel=(0.43,-0.89,0.15)
+[INFO] [1778852125.179614385] [fly_straight_part1]: dist=1.77  pos=(-0.76,1.58,2.75)  vel=(0.38,-0.79,0.13)
+[INFO] [1778852126.278994551] [fly_straight_part1]: dist=0.82  pos=(-0.35,0.73,2.88)  vel=(0.17,-0.37,0.06)
+[INFO] [1778852127.279243249] [fly_straight_part1]: dist=0.32  pos=(-0.13,0.29,2.94)  vel=(0.07,-0.14,0.03)
+[INFO] [1778852127.779035490] [fly_straight_part1]: Reached target (0.0, 0.0, 3.0)! pos=(-0.08, 0.17, 2.96)
+
+# ── Target 3: (6.0, -3.0, 1.0) ─────────────────────────────────────────────
+root@02d45840483d:~/part1# python3 fly_straight_part1.py --target 6 -3 1
+[INFO] [1778852172.376160957] [fly_straight_part1]: Target: (6.0, -3.0, 1.0)  Kp=0.5  max_speed=1.0
+[INFO] [1778852172.458196779] [fly_straight_part1]: dist=6.78  pos=(0.00,0.00,0.00)  vel=(0.88,-0.44,0.15)
+[INFO] [1778852173.558000687] [fly_straight_part1]: dist=7.07  pos=(0.00,0.04,3.18)  vel=(0.85,-0.43,-0.31)
+[INFO] [1778852174.558180132] [fly_straight_part1]: dist=6.31  pos=(0.65,-0.28,2.93)  vel=(0.85,-0.43,-0.31)
+[INFO] [1778852175.658003161] [fly_straight_part1]: dist=5.27  pos=(1.53,-0.72,2.60)  vel=(0.85,-0.43,-0.30)
+[INFO] [1778852176.660435055] [fly_straight_part1]: dist=4.28  pos=(2.37,-1.14,2.30)  vel=(0.85,-0.43,-0.30)
+[INFO] [1778852177.758944285] [fly_straight_part1]: dist=3.19  pos=(3.30,-1.61,1.98)  vel=(0.85,-0.43,-0.31)
+[INFO] [1778852178.858001992] [fly_straight_part1]: dist=2.11  pos=(4.22,-2.08,1.65)  vel=(0.85,-0.44,-0.31)
+[INFO] [1778852179.858654598] [fly_straight_part1]: dist=1.15  pos=(5.03,-2.49,1.37)  vel=(0.48,-0.25,-0.19)
+[INFO] [1778852180.858882764] [fly_straight_part1]: dist=0.52  pos=(5.58,-2.78,1.19)  vel=(0.21,-0.11,-0.10)
+[INFO] [1778852181.859206935] [fly_straight_part1]: Reached target (6.0, -3.0, 1.0)! pos=(5.85, -2.92, 1.10)
+
+# ── Default target: (5.0, 3.0, 2.0) ────────────────────────────────────────
+root@02d45840483d:~/part1# python3 fly_straight_part1.py
+[INFO] [1778852269.344366589] [fly_straight_part1]: Target: (5.0, 3.0, 2.0)  Kp=0.5  max_speed=1.0
+[INFO] [1778852269.426707613] [fly_straight_part1]: dist=6.07  pos=(5.95,-2.97,1.49)  vel=(-0.16,0.98,0.08)
+[INFO] [1778852270.427621225] [fly_straight_part1]: dist=5.65  pos=(5.89,-2.56,1.55)  vel=(-0.16,0.98,0.08)
+[INFO] [1778852271.526422311] [fly_straight_part1]: dist=4.63  pos=(5.72,-1.56,1.63)  vel=(-0.16,0.98,0.08)
+[INFO] [1778852272.526421347] [fly_straight_part1]: dist=3.65  pos=(5.56,-0.59,1.71)  vel=(-0.15,0.98,0.08)
+[INFO] [1778852273.626267111] [fly_straight_part1]: dist=2.55  pos=(5.39,0.49,1.80)  vel=(-0.15,0.99,0.08)
+[INFO] [1778852274.626954477] [fly_straight_part1]: dist=1.57  pos=(5.23,1.46,1.88)  vel=(-0.12,0.77,0.06)
+[INFO] [1778852275.726479151] [fly_straight_part1]: dist=0.68  pos=(5.10,2.33,1.95)  vel=(-0.05,0.34,0.03)
+[INFO] [1778852276.826459862] [fly_straight_part1]: dist=0.23  pos=(5.03,2.77,1.98)  vel=(-0.01,0.11,0.01)
+[INFO] [1778852277.026358284] [fly_straight_part1]: Reached target (5.0, 3.0, 2.0)! pos=(5.02, 2.82, 1.98)
