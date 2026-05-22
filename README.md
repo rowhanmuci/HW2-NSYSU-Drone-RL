@@ -6,6 +6,20 @@
 
 ---
 
+## 作業來源 / Assignment Source
+
+本作業由國立中山大學（NSYSU）課程發布。題目文件如下：
+
+| 檔案 | 說明 |
+|------|------|
+| [HW2_Assignment_Intro.pdf](HW2_Assignment_Intro.pdf) | 作業總說明（任務概述、評分標準） |
+| [HW2_NSYSU_Drone_RL_EN.pdf](HW2_NSYSU_Drone_RL_EN.pdf) | 英文版完整題目（Task A–E 詳細規格） |
+
+> Course: Reinforcement Learning, NSYSU  
+> Simulation environment: [NSYSU-ARL/Assignment2](https://github.com/NSYSU-ARL/Assignment2) (Gazebo + ROS 2 + simple_drone)
+
+---
+
 ## 1. Prerequisites
 
 - Docker Desktop (Windows) or Docker 24.x (Linux/macOS)

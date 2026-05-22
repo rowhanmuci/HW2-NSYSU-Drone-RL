@@ -1,5 +1,7 @@
 Assignment2/
 *.pdf
+!HW2_Assignment_Intro.pdf
+!HW2_NSYSU_Drone_RL_EN.pdf
 part2 (task E)/models/*.zip
 part2 (task E)/logs/events.*
 __pycache__/
