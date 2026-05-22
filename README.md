@@ -68,13 +68,13 @@ Open a second terminal (keep VNC open), then:
 **Windows PowerShell:**
 ```powershell
 docker cp part1 nsysu_drone_vnc:/root/
-docker cp part2 nsysu_drone_vnc:/root/
+docker cp "part2 (task E)" nsysu_drone_vnc:/root/part2
 ```
 
 **Linux/macOS:**
 ```bash
 docker cp part1 nsysu_drone_vnc:/root/
-docker cp part2 nsysu_drone_vnc:/root/
+docker cp "part2 (task E)" nsysu_drone_vnc:/root/part2
 ```
 
 ---
@@ -131,7 +131,7 @@ Save Gazebo screenshots to `part1/screenshot_*.png`.
 
 ---
 
-## 6. Part 2 – RL Training (PPO)
+## 6. Part 2 (Task E) – RL Training (PPO)
 
 ```bash
 cd /root/part2
@@ -153,7 +153,7 @@ Save the reward curve screenshot to `logs/training_curve.png`.
 
 ---
 
-## 7. Part 2 – Evaluation
+## 7. Part 2 (Task E) – Evaluation
 
 ```bash
 cd /root/part2
@@ -169,7 +169,7 @@ python3 test.py --model models/best/best_model --episodes 10
 |---------|-----------|
 | **State S** | pos(3) + vel(3) + current waypoint(3) + distance(1) + progress(1) + XY direction(2) = **13-D** |
 | **Action A** | velocity command (vx, vy, vz) ∈ [−1, 1]³ |
-| **Reward R** | −0.01·dist − 0.005/step + 10·(WP reached) + 50·(all done) − 100·(crash) − 50·(OOB) |
+| **Reward R** | (prev\_dist − dist)×2 − 0.01/step + 20·(WP reached) + 100·(all done) − 100·(crash) − 50·(OOB) |
 | **γ** | 0.99 |
 
 **Waypoints (WAYPOINTS_MEDIUM):**

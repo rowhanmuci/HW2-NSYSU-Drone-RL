@@ -1,7 +1,7 @@
 Assignment2/
 *.pdf
-part2/models/*.zip
-part2/logs/events.*
+part2 (task E)/models/*.zip
+part2 (task E)/logs/events.*
 __pycache__/
 *.pyc
 *.md~

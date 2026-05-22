@@ -2,24 +2,24 @@
 """
 drone_env.py
 ------------
-Gymnasium environment for Task E: Multi-Waypoint Cruising.
+Gymnasium environment for Task A: Precision Hovering.
 
-The drone must visit all waypoints in order while minimizing time.
-Extends the pattern from rl_fly_to_target.py (provided starter code).
+The drone must reach a fixed target (x, y, z) and maintain a stable
+hover — position error < success_radius AND |velocity| < 0.3 m/s —
+for stable_steps_required consecutive steps, even under wind disturbance
+(motionDriftNoise in Gazebo).
 
-Observation (13-D float32):
-    [0:3]   drone position      (x, y, z)
-    [3:6]   drone velocity      (vx, vy, vz)
-    [6:9]   current waypoint    (wx, wy, wz)
-    [9]     distance to current waypoint
-    [10]    progress ratio      (waypoints done / total)
-    [11:13] unit direction to waypoint in XY plane (dx, dy)
+Observation (10-D float32):
+    [0:3]  drone position      (x, y, z)
+    [3:6]  drone velocity      (vx, vy, vz)
+    [6:9]  hover target        (tx, ty, tz)
+    [9]    distance to target
 
 Action (3-D float32 in [-1, 1]):
     velocity command (vx, vy, vz) in m/s
 """
 
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -29,34 +29,19 @@ from std_msgs.msg import Empty
 import gymnasium as gym
 from gymnasium import spaces
 
-
-# ── Waypoint presets ────────────────────────────────────────────────────────
-WAYPOINTS_EASY: List[Tuple[float, float, float]] = [
-    (2.0,  0.0, 2.0),
-    (4.0,  2.0, 2.0),
-    (2.0,  4.0, 2.0),
-    (0.0,  2.0, 2.0),
-]
-
-WAYPOINTS_MEDIUM: List[Tuple[float, float, float]] = [
-    ( 3.0,  0.0, 2.0),
-    ( 3.0,  3.0, 3.0),
-    ( 0.0,  3.0, 2.5),
-    (-2.0,  0.0, 2.0),
-    ( 0.0, -2.0, 1.5),
-]
+DEFAULT_TARGET: Tuple[float, float, float] = (2.0, 0.0, 2.0)
 
 
 # ── ROS 2 interface ──────────────────────────────────────────────────────────
 class DroneROSInterface(Node):
     """
     Thin ROS 2 node: publishes velocity/reset/takeoff commands,
-    subscribes to ground-truth pose.  Follows the same topic layout
-    as the provided rl_fly_to_target.py starter.
+    subscribes to ground-truth pose.  Topic layout matches the
+    provided rl_fly_to_target.py starter and Task E.
     """
 
     def __init__(self):
-        super().__init__("rl_waypoint_interface")
+        super().__init__("rl_hover_interface")
         self.current_pose = np.zeros(3, dtype=np.float32)
         self.current_vel  = np.zeros(3, dtype=np.float32)
 
@@ -80,34 +65,59 @@ class DroneROSInterface(Node):
         msg.linear.z = float(vz)
         self._cmd_pub.publish(msg)
 
-    def reset_and_takeoff(self, safe_z: float = 0.3, timeout: float = 10.0) -> None:
-        """Reset drone pose in Gazebo, issue takeoff, then wait until airborne."""
+    def reset_and_takeoff(self) -> None:
+        """Reset drone, take off, then fly back to the origin hover point.
+
+        Gazebo's reset topic lands the drone at its current location.
+        A P-controller then steers it to (0, 0, 2) before handing
+        control to the RL policy, preventing permanent OOB episodes.
+        """
         import time
+        self.send_velocity(0.0, 0.0, 0.0)
+        t_end = time.time() + 0.5
+        while time.time() < t_end:
+            rclpy.spin_once(self, timeout_sec=0.1)
+
         self._reset_pub.publish(Empty())
-        time.sleep(1.0)
-        for _ in range(10):
+        t_end = time.time() + 2.0
+        while time.time() < t_end:
             rclpy.spin_once(self, timeout_sec=0.1)
 
         self._takeoff_pub.publish(Empty())
-        # Spin until the drone clears safe_z or timeout expires
-        deadline = time.time() + timeout
-        while time.time() < deadline:
+        t_end = time.time() + 2.5
+        while time.time() < t_end:
             rclpy.spin_once(self, timeout_sec=0.1)
-            if self.current_pose[2] > safe_z:
+
+        # P-controller: return drone to (0, 0, 2) before episode starts
+        home     = np.array([0.0, 0.0, 2.0], dtype=np.float32)
+        deadline = time.time() + 60.0
+        while time.time() < deadline:
+            err  = home - self.current_pose
+            dist = float(np.linalg.norm(err))
+            if dist < 0.3:
                 break
+            speed = min(1.0, dist * 0.5)
+            vel   = (err / dist) * speed
+            self.send_velocity(float(vel[0]), float(vel[1]), float(vel[2]))
+            rclpy.spin_once(self, timeout_sec=0.1)
+
+        self.send_velocity(0.0, 0.0, 0.0)
+        t_end = time.time() + 1.0
+        while time.time() < t_end:
+            rclpy.spin_once(self, timeout_sec=0.1)
         self.current_vel = np.zeros(3, dtype=np.float32)
 
 
 # ── Gymnasium environment ────────────────────────────────────────────────────
-class DroneWaypointEnv(gym.Env):
+class DroneHoverEnv(gym.Env):
     """
-    Task E – Multi-Waypoint Cruising.
+    Task A – Precision Hovering.
 
     Episode ends when:
-      - All waypoints are visited              (success, terminated=True)
-      - Drone crashes (altitude < 0.1 m)       (failure, terminated=True)
-      - Drone leaves the flight zone            (failure, terminated=True)
-      - Step budget is exhausted                (truncated=True)
+      - Stable hover achieved (dist < radius, |vel| < 0.3 for N steps)  (success, terminated=True)
+      - Drone crashes (altitude < 0.1 m)                                (failure, terminated=True)
+      - Drone leaves the flight zone                                     (failure, terminated=True)
+      - Step budget is exhausted                                         (truncated=True)
     """
 
     metadata = {"render_modes": []}
@@ -115,27 +125,30 @@ class DroneWaypointEnv(gym.Env):
     def __init__(
         self,
         ros_interface: Optional[DroneROSInterface] = None,
-        waypoints: List[Tuple[float, float, float]] = WAYPOINTS_MEDIUM,
+        target: Tuple[float, float, float] = DEFAULT_TARGET,
         success_radius: float = 0.3,
-        max_steps: int = 1000,
-        out_of_bounds: float = 10.0,
+        stable_steps_required: int = 30,
+        max_steps: int = 300,
+        out_of_bounds: float = 6.0,
     ):
         super().__init__()
-        self._ros        = ros_interface
-        self._waypoints  = [np.array(wp, dtype=np.float32) for wp in waypoints]
-        self.success_radius = success_radius
-        self.max_steps      = max_steps
-        self.out_of_bounds  = out_of_bounds
+        self._ros                  = ros_interface
+        self._target               = np.array(target, dtype=np.float32)
+        self.success_radius        = success_radius
+        self.stable_steps_required = stable_steps_required
+        self.max_steps             = max_steps
+        self.out_of_bounds         = out_of_bounds
 
         self.action_space = spaces.Box(
             low=-1.0, high=1.0, shape=(3,), dtype=np.float32
         )
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(13,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32
         )
 
-        self._current_wp_idx = 0
-        self._step_count     = 0
+        self._step_count   = 0
+        self._stable_count = 0
+        self._prev_dist    = 0.0
 
     # ── helpers ─────────────────────────────────────────────────────────────
     def set_ros_interface(self, ros: DroneROSInterface) -> None:
@@ -150,36 +163,22 @@ class DroneWaypointEnv(gym.Env):
             )
         return self._ros
 
-    @property
-    def _current_wp(self) -> np.ndarray:
-        return self._waypoints[self._current_wp_idx]
-
     def _get_obs(self) -> np.ndarray:
-        ros  = self._ros_node
-        pos  = ros.current_pose
-        vel  = ros.current_vel
-        wp   = self._current_wp
-        diff = wp - pos
-        dist = float(np.linalg.norm(diff))
-
-        progress = float(self._current_wp_idx) / len(self._waypoints)
-
-        # Unit vector in XY plane toward current waypoint
-        horiz      = diff[:2]
-        horiz_norm = float(np.linalg.norm(horiz))
-        direction  = (horiz / horiz_norm).astype(np.float32) if horiz_norm > 1e-6 \
-                     else np.zeros(2, dtype=np.float32)
-
+        pos  = self._ros_node.current_pose
+        vel  = self._ros_node.current_vel
+        dist = float(np.linalg.norm(pos - self._target))
         return np.concatenate(
-            [pos, vel, wp, [dist], [progress], direction]
+            [pos, vel, self._target, [dist]]
         ).astype(np.float32)
 
     # ── Gym API ──────────────────────────────────────────────────────────────
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self._ros_node.reset_and_takeoff()
-        self._current_wp_idx = 0
-        self._step_count     = 0
+        self._step_count   = 0
+        self._stable_count = 0
+        pos = self._ros_node.current_pose
+        self._prev_dist = float(np.linalg.norm(pos - self._target))
         return self._get_obs(), {}
 
     def step(self, action):
@@ -189,42 +188,66 @@ class DroneWaypointEnv(gym.Env):
         rclpy.spin_once(ros, timeout_sec=0.1)
         self._step_count += 1
 
-        pos  = ros.current_pose
-        wp   = self._current_wp
-        dist = float(np.linalg.norm(pos - wp))
+        pos     = ros.current_pose
+        vel     = ros.current_vel
+        dist    = float(np.linalg.norm(pos - self._target))
+        vel_mag = float(np.linalg.norm(vel))
 
         # ── reward ───────────────────────────────────────────────────────────
-        reward     = -0.01 * dist    # dense distance shaping
-        reward    -= 0.005           # per-step time penalty
+        # Large shaping coefficient (100 vs old 10) is the key fix:
+        # Gazebo's physical damping means actual drone displacement is ~0.05 m/step.
+        # With shaping×10 the per-episode return std is ~9, below V(s) estimation
+        # noise (~20-50) → PPO cannot distinguish navigation from hovering.
+        # With shaping×100 the std rises to ~90, well above noise → clear signal.
+        #
+        # Reduced distance penalty (0.5 vs old 2.0) keeps the negative baseline
+        # from dominating, so the advantage signal from shaping is proportionally
+        # larger relative to V(s).
+        shaping = (self._prev_dist - dist) * 100.0
+        self._prev_dist = dist
+
+        reward  = -dist * 0.5       # gentle distance penalty (not dominant)
+        reward += shaping           # strong navigation gradient
+        reward -= vel_mag * 0.05    # velocity penalty (stability)
+        reward -= 0.01              # per-step time penalty
+
         terminated = False
 
         if dist < self.success_radius:
-            reward += 10.0
-            self._current_wp_idx += 1
-            if self._current_wp_idx >= len(self._waypoints):
-                reward    += 50.0
+            reward += 3.0          # per-step zone bonus: breaks zero-advantage loop
+            self._stable_count += 1
+            if self._stable_count >= self.stable_steps_required:
+                reward    += 100.0
                 terminated = True
+        else:
+            self._stable_count = 0
 
-        # Grace period: ignore crash/OOB for first 10 steps (takeoff phase)
-        if self._step_count > 10:
-            if pos[2] < 0.1:            # crash / ground contact
+        # Grace period: ignore crash/OOB for first 20 steps (takeoff phase)
+        if self._step_count > 20:
+            if pos[2] < 0.1:
                 reward    -= 100.0
                 terminated = True
 
-            if (np.any(np.abs(pos[:2]) > self.out_of_bounds)
+            if (np.any(np.abs(pos) > self.out_of_bounds)
                     or pos[2] > self.out_of_bounds):
                 reward    -= 50.0
                 terminated = True
 
         truncated = self._step_count >= self.max_steps
 
-        obs  = self._get_obs()
-        info = {
-            "waypoints_done":  self._current_wp_idx,
-            "total_waypoints": len(self._waypoints),
-            "distance_to_wp":  dist,
-        }
-        return obs, float(reward), terminated, truncated, info
+        success = terminated and self._stable_count >= self.stable_steps_required
+        return (
+            self._get_obs(),
+            float(reward),
+            terminated,
+            truncated,
+            {
+                "distance":     dist,
+                "vel_mag":      vel_mag,
+                "stable_count": self._stable_count,
+                "success":      success,
+            },
+        )
 
     def close(self) -> None:
         if self._ros is not None:
